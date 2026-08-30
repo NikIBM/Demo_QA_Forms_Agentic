@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "esModuleInterop": true,
+    "strict": false,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "apps/**/*.ts",
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

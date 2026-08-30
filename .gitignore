@@ -1,0 +1,20 @@
+
+# Playwright
+node_modules/
+/test-results/
+/blob-report/
+/playwright/.cache/
+/AllTestResults/
+/playwright-report/
+.npmrc
+README.md
+package-lock.json
+package.json
+/all_10k
+/packages
+# Local test-case documentation (not committed)
+/docs/
+.env 
+
+# Test planner output files (not committed)
+apps/demoqa-e2e/test-planner/

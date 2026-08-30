@@ -1,0 +1,101 @@
+name: Playwright Tests
+
+on:
+  workflow_call:
+    inputs:
+      urlUserPortal:
+        description: 'Enter URL for User Portal'
+        required: true
+        type: string
+      usernameUserPortal:
+        description: 'Enter username'
+        required: true
+        type: string
+      passwordUserPortal:
+        description: 'Enter password'
+        required: true
+        type: string
+      urlAdminPortal:
+        description: 'Enter URL for Admin Portal'
+        required: true
+        type: string
+      usernameAdminPortal:
+        description: 'Enter Admin username'
+        required: true
+        type: string
+      passwordAdminPortal:
+        description: 'Enter Admin password'
+        required: true
+        type: string
+
+    outputs:
+      playwright-status:
+        description: 'Status of Playwright tests'
+        value: ${{ jobs.playwright-test.outputs.status }}
+
+jobs:
+  playwright-test:
+    timeout-minutes: 120
+    runs-on: self-hosted
+
+    outputs:
+      status: ${{ steps.set-status.outputs.result }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    #Node.js is pre-installed so just verifying the version.
+    - name: Verify Node.js version
+      run: node -v
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Verify npm version
+      run: npm -v
+
+    #Chrome browser is pre-installed, it is being referenced from Playwright Config file.
+    
+    - name: Print input values (for debug only)
+      run: |
+        Write-Host "URL: ${{ inputs.urlUserPortal }}"
+        Write-Host "Username: ${{ inputs.usernameUserPortal }}"
+        Write-Host "Password: ${{ inputs.passwordUserPortal }}"
+        Write-Host "Admin URL: ${{ inputs.urlAdminPortal }}"
+        Write-Host "Admin Username: ${{ inputs.usernameAdminPortal }}"
+        Write-Host "Admin Password: ${{ inputs.passwordAdminPortal }}"
+
+    - name: Run Playwright tests
+      env:
+        USER_PORTAL_URL: ${{ inputs.urlUserPortal }}
+        USER_PORTAL_USERNAME: ${{ inputs.usernameUserPortal }}
+        USER_PORTAL_PASSWORD: ${{ inputs.passwordUserPortal }}
+        ADMIN_PORTAL_URL: ${{ inputs.urlAdminPortal }}
+        ADMIN_PORTAL_USERNAME: ${{ inputs.usernameAdminPortal }}
+        ADMIN_PORTAL_PASSWORD: ${{ inputs.passwordAdminPortal }}
+
+      run: |
+        npm install typescript --save-dev
+        npx tsc ExecuteTest.ts
+        node ExecuteTest.js
+
+    - name: Upload Playwright HTML report
+      uses: actions/upload-artifact@v3
+      if: ${{ !cancelled() }}
+      with:
+        name: html-reports
+        path: AllTestResults/HTMLReports/
+        retention-days: 60
+    
+    - name: Set job status output
+      if: always()
+      id: set-status
+      run: |
+        if ( "${{ job.status }}" -ne "success" ) {
+          echo "result=failure" >> $env:GITHUB_OUTPUT
+        }
+        else {
+          echo "result=success" >> $env:GITHUB_OUTPUT
+        }
+        

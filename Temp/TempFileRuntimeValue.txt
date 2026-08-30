@@ -1,0 +1,5 @@
+TemplateName=ATTempName03566149
+ParticipantNickName=ATNickName244708
+AchBatchRefNumber=772
+AchFileName=ACH_20260115_215754_C_9991.txt
+DefaultNumberOfApprovals=0
