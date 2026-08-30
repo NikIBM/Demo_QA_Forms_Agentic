@@ -5,6 +5,7 @@
     "moduleResolution": "node16",
     "esModuleInterop": true,
     "strict": false,
+    "types": ["node"],
     "outDir": "./dist",
     "rootDir": ".",
     "resolveJsonModule": true,
