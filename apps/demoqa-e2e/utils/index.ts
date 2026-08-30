@@ -1,0 +1,36 @@
+/*
+ * Author: Bob
+ * Created (yyyy-mm-dd): 2025-07-10
+ * Description: Low-level utility helpers for DemoQA Playwright tests.
+ */
+import type { Locator } from '@playwright/test';
+
+const MAX_RETRIES = 5;
+
+/**
+ * Delays execution for the specified duration.
+ * @param ms - Duration in milliseconds.
+ */
+export async function addTimeout(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Fills an input field, retrying up to MAX_RETRIES times to handle
+ * flaky React-controlled inputs that may reset after a single fill.
+ * @param inputElement - Locator of the input element.
+ * @param value        - Value to fill.
+ */
+export async function fillInputField(inputElement: Locator, value: string): Promise<void> {
+  try {
+    await inputElement.isEditable();
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      await inputElement.clear();
+      await inputElement.fill(value);
+      const currentValue = await inputElement.inputValue();
+      if (currentValue === value) break;
+    }
+  } catch (error) {
+    console.error(`Failed to fill input field: ${error}`);
+  }
+}
