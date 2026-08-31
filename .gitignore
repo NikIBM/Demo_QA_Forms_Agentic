@@ -15,6 +15,9 @@ package.json
 # Local test-case documentation (not committed)
 /docs/
 .env 
+# macOS
+.DS_Store
+**/.DS_Store
 
 # Test planner output files (not committed)
 apps/demoqa-e2e/test-planner/
