@@ -6,11 +6,6 @@ node_modules/
 /playwright/.cache/
 /AllTestResults/
 /playwright-report/
-.npmrc
-README.md
-package-lock.json
-package.json
-/all_10k
 /packages
 # Local test-case documentation (not committed)
 /docs/

@@ -1,0 +1,19 @@
+{
+  "name": "demoqa-forms-agentic",
+  "version": "1.0.0",
+  "description": "DemoQA Student Registration Form — Playwright e2e test suite",
+  "private": true,
+  "scripts": {
+    "test:demoqa": "npx playwright test",
+    "test:demoqa:headed": "npx playwright test --headed",
+    "test:demoqa:ui": "npx playwright test --ui",
+    "report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.6.1",
+    "typescript": "^5.9.3"
+  }
+}
