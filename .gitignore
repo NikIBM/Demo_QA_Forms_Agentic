@@ -9,7 +9,6 @@ node_modules/
 /packages
 # Local test-case documentation (not committed)
 /docs/
-.env 
 # macOS
 .DS_Store
 **/.DS_Store
