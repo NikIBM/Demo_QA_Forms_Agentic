@@ -82,7 +82,7 @@ for (let i = 0; i < testFilesToRun.length; i++) {
   console.log(`\nRunning: ${file}`);
   let testFailed = false;
   try {
-    execSync(`npx playwright test "${file}" --workers=1 --output=playwright-report --config=apps/demoqa-e2e/playwright.config.ts --headed`, { stdio: 'inherit' });
+    execSync(`npx playwright test "${file}" --workers=1 --output=playwright-report --headed`, { stdio: 'inherit' });
   } catch (error) {
     console.error(`Test failed: ${file}`);
     testFailed = true;
