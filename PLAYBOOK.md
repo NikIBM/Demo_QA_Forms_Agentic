@@ -1,7 +1,7 @@
-# Tester Playbook — End-to-End Execution Guide
+# Tester Playbook — DemoQA Student Registration Form
 
-> **Who this is for:** Any tester who has received a test plan `.md` file and needs to run the
-> automated tests and produce a results report.
+> **Who this is for:** Any tester who needs to run the automated tests for the DemoQA
+> Student Registration Form and produce a results report.
 > Follow every phase in order. Do not skip steps.
 
 ---
@@ -9,15 +9,16 @@
 ## Table of Contents
 
 1. [Phase 0 — Prerequisites](#phase-0--prerequisites)
-2. [Phase 1 — Receive & Review the Test Plan](#phase-1--receive--review-the-test-plan)
+2. [Phase 1 — Understand the Project Structure](#phase-1--understand-the-project-structure)
 3. [Phase 2 — Set Up the Environment](#phase-2--set-up-the-environment)
-4. [Phase 3 — Configure Test Data](#phase-3--configure-test-data)
-5. [Phase 4 — Register the Test in TestController](#phase-4--register-the-test-in-testcontroller)
-6. [Phase 5 — Run the Tests](#phase-5--run-the-tests)
-7. [Phase 6 — Review the Results](#phase-6--review-the-results)
-8. [Phase 7 — Report & Hand Off](#phase-7--report--hand-off)
-9. [Quick Reference Card](#quick-reference-card)
-10. [Troubleshooting](#troubleshooting)
+4. [Phase 3 — Review the Test Plan](#phase-3--review-the-test-plan)
+5. [Phase 4 — Configure Test Data](#phase-4--configure-test-data)
+6. [Phase 5 — Register the Test in TestController](#phase-5--register-the-test-in-testcontroller)
+7. [Phase 6 — Run the Tests](#phase-6--run-the-tests)
+8. [Phase 7 — Review the Results](#phase-7--review-the-results)
+9. [Phase 8 — Report & Hand Off](#phase-8--report--hand-off)
+10. [Quick Reference Card](#quick-reference-card)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -36,55 +37,52 @@ If any of these are missing, install them before continuing.
 
 ---
 
-## Phase 1 — Receive & Review the Test Plan
-
-### 1.1 Open the `.md` file
-
-The test plan file you received will be under:
+## Phase 1 — Understand the Project Structure
 
 ```
-apps/<suite>/test-planner/<Feature>/<NN>_<ScenarioName>.md
+Demo_QA_Forms_Agentic/
+├── apps/
+│   └── demoqa-e2e/                         ← The DemoQA test suite
+│       ├── pages/
+│       │   ├── Common/
+│       │   │   └── base.page.ts            ← Base page object (shared helpers)
+│       │   └── RegistrationForm/
+│       │       └── DemoQARegistrationForm.page.ts  ← Registration Form page object
+│       ├── test-data/
+│       │   └── RegistrationForm/
+│       │       ├── DemoQARegistrationFormTest-data.csv  ← All 20 test cases' data
+│       │       └── assets/
+│       │           ├── image.jpg           ← Upload asset (TC_014)
+│       │           ├── image.png           ← Upload asset (TC_015)
+│       │           └── sample.mp4          ← Upload asset — invalid format (TC_016)
+│       ├── test-planner/
+│       │   └── RegistrationForm/
+│       │       ├── TC_001_ValidFullFormSubmission.md
+│       │       ├── TC_002_EmptyFormSubmission.md
+│       │       └── … TC_003 through TC_020
+│       ├── tests/
+│       │   └── RegistrationForm/
+│       │       └── DemoQARegistrationFormTest.spec.ts  ← Single spec for all 20 TCs
+│       └── utils/
+│           ├── CommonFunctions.ts          ← Screenshot helper
+│           ├── index.ts                    ← fillInputField retry helper
+│           └── TestController.ts           ← Test run registry
+├── playwright.config.ts                    ← Single consolidated Playwright config
+├── ExecuteTest.ts                          ← Orchestrator: runs all tests in order
+├── GenerateSummaryReport.ts                ← Builds TestExecutionSummary.html
+├── AllTestResults/                         ← Per-run HTML reports (auto-created)
+└── .env                                    ← Credentials & run-control (never committed)
 ```
 
-Example:
-```
-apps/saucedemo-e2e/test-planner/Login/02_Login_Invalid_User.md
-```
+### Key design decisions
 
-### 1.2 Read and understand the three sections
-
-Every test plan `.md` file has exactly three sections. Read all three before touching any code.
-
-| Section | What it tells you | What you need from it |
-|---|---|---|
-| **STEP 1 — Test Intent** | One-sentence goal of the test | Confirm you understand what is being verified |
-| **STEP 2 — Structured Test Plan** | Test Case ID, preconditions, numbered steps, expected results, screenshots, CSV row to add | The exact test data row to add to the CSV; the preconditions you must satisfy |
-| **STEP 3 — Automation Readiness Check** | Whether locators and page-object methods exist; any blockers | If any row shows ❌ — stop and raise it with the developer before proceeding |
-
-### 1.3 Check the header block
-
-At the top of the `.md` file you will see a header like this:
-
-```
-Application suite:   saucedemo-e2e
-Base URL:            https://www.saucedemo.com/
-Playwright config:   apps/saucedemo-e2e/playwright.config.ts
-Spec file:           apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts
-Page object:         apps/saucedemo-e2e/pages/Login/SaucedemoLogin.page.ts
-Test data CSV:       apps/saucedemo-e2e/test-data/Login/SaucedemoLoginTest-data.csv
-```
-
-Note these paths — you will need them in the steps that follow.
-
-### 1.4 Blockers checklist
-
-Before proceeding, verify:
-
-- [ ] STEP 3 shows **no ❌ rows** (all checks pass)
-- [ ] You have the `.env` credentials for the target environment (see §2.3)
-- [ ] The spec file listed in the header actually exists on disk
-
-If any item is unchecked, **stop here** and resolve it with the development team.
+| Decision | Detail |
+|---|---|
+| **Single spec file** | All 20 test cases (`TC_001`–`TC_020`) run from one spec driven by the CSV |
+| **Data-driven** | Each row in the CSV becomes one Playwright `test()` — the `scenario_description` column becomes the test title |
+| **Single config** | `playwright.config.ts` at the repo root is the only config file |
+| **Retries** | 3 retries always (CI and local) to handle DemoQA flakiness |
+| **Screenshots** | Captured at each major step; controlled by `TAKE_SCREENSHOTS` env var |
 
 ---
 
@@ -96,7 +94,7 @@ If you do not have the repo locally:
 
 ```bash
 git clone <repo-url>
-cd playwright-regression-develop
+cd Demo_QA_Forms_Agentic
 ```
 
 If you already have it, pull the latest changes:
@@ -117,271 +115,337 @@ Expected output ends with something like `added N packages`. No errors should ap
 
 ### 2.3 Create the `.env` file
 
-The `.env` file holds all credentials and run-control variables. It is **never committed** to Git —
-you must create it yourself from the values provided by your team.
-
-Create a file named `.env` at the repo root (same level as `package.json`):
+The `.env` file holds all credentials and run-control variables. It is **never committed to Git** —
+you must create it yourself at the repo root (same level as `package.json`):
 
 ```
 # ── Run control ──────────────────────────────────────────
 TEST_EXECUTION_LOCATION=LOCAL
 TAKE_SCREENSHOTS=true
 
-# ── Saucedemo suite ──────────────────────────────────────
-SAUCEDEMO_URL=https://www.saucedemo.com/
-SAUCEDEMO_USERNAME=<username provided by your team>
-SAUCEDEMO_PASSWORD=<password provided by your team>
+# ── DemoQA suite ─────────────────────────────────────────
+DEMOQA_URL=https://demoqa.com
 ```
 
-> **Security rule:** Never share, commit, or email the `.env` file. Treat the passwords inside
-> it like a bank PIN.
+> **Security rule:** Never share, commit, or email the `.env` file.
 
-**Verify it is working** — open `apps/saucedemo-e2e/playwright.config.ts` and confirm the path
-`../../.env` resolves to the file you just created.
+**Variables explained:**
+
+| Variable | Required | Description |
+|---|---|---|
+| `TEST_EXECUTION_LOCATION` | Yes | `LOCAL` for local runs; `GITHUB` for CI runs |
+| `TAKE_SCREENSHOTS` | No | Set to `false` to disable screenshots (speeds up local runs) |
+| `DEMOQA_URL` | No | Defaults to `https://demoqa.com` if not set |
 
 ---
 
-## Phase 3 — Configure Test Data
+## Phase 3 — Review the Test Plan
 
-### 3.1 Locate the CSV file
+### 3.1 Locate the test plan files
 
-The path is in the header block of your `.md` file, for example:
-
-```
-apps/saucedemo-e2e/test-data/Login/SaucedemoLoginTest-data.csv
-```
-
-Open the file. The first row is always the header row — **do not delete it**.
-
-### 3.2 Add the CSV row from the test plan
-
-In STEP 2 of your `.md` file, find the **CSV row** block, for example:
+Test plan files are located at:
 
 ```
-invalid_user,invalid_password,error,Login attempt with invalid credentials
+apps/demoqa-e2e/test-planner/RegistrationForm/
+├── TC_001_ValidFullFormSubmission.md
+├── TC_002_EmptyFormSubmission.md
+├── TC_003_SubmitWithoutFirstName.md
+├── TC_004_SubmitWithoutLastName.md
+├── TC_005_InvalidEmailFormat.md
+├── TC_006_ExistingEmailSubmission.md
+├── TC_007_GenderRadioMutualExclusion.md
+├── TC_008_InvalidMobileNumber.md
+├── TC_009_ExistingMobileNumber.md
+├── TC_010_PastDateOfBirth.md
+├── TC_011_FutureDateOfBirth.md
+├── TC_012_SubjectsAutocomplete.md
+├── TC_013_MultipleHobbiesSelection.md
+├── TC_014_UploadJPGPicture.md
+├── TC_015_UploadPNGPicture.md
+├── TC_016_UploadMP4InvalidFormat.md
+├── TC_017_AddressSpecialCharacters.md
+├── TC_018_StateSelectionEnablesCity.md
+├── TC_019_CityDisabledWithoutState.md
+└── TC_020_CloseButtonDismissesModal.md
 ```
 
-Append this row on a new line at the end of the CSV file. The file should look like:
+### 3.2 Read each plan before touching any code
+
+Every `.md` file has three sections:
+
+| Section | What it tells you |
+|---|---|
+| **STEP 1 — Test Intent** | One-sentence goal of the test |
+| **STEP 2 — Structured Test Plan** | Test Case ID, preconditions, numbered steps, expected results, CSV row to add |
+| **STEP 3 — Automation Readiness Check** | Whether locators and page-object methods exist; any known blockers |
+
+### 3.3 Blockers checklist
+
+Before running, verify for each TC:
+
+- [ ] STEP 3 shows **no ❌ rows** (all checks pass)
+- [ ] The spec file `apps/demoqa-e2e/tests/RegistrationForm/DemoQARegistrationFormTest.spec.ts` exists on disk
+- [ ] The CSV row for the TC exists in `DemoQARegistrationFormTest-data.csv`
+
+If any item is unchecked, **stop here** and resolve it with the development team.
+
+---
+
+## Phase 4 — Configure Test Data
+
+### 4.1 Locate the CSV file
 
 ```
-user_id,password,expected_result,scenario_description
-standard_user,secret_sauce,success,Valid login with standard_user credentials
-invalid_user,invalid_password,error,Login attempt with invalid credentials
+apps/demoqa-e2e/test-data/RegistrationForm/DemoQARegistrationFormTest-data.csv
+```
+
+Open the file. The **first row is always the header** — do not delete it.
+
+### 4.2 CSV column reference
+
+| Column | Description | Example |
+|---|---|---|
+| `tc_id` | Test Case ID | `TC_001` |
+| `first_name` | First name (leave empty to test validation) | `John` |
+| `last_name` | Last name | `Smith` |
+| `email` | Email address | `john.smith@example.com` |
+| `gender` | `Male`, `Female`, or `Other` | `Male` |
+| `mobile` | 10-digit mobile number | `9876543210` |
+| `dob_day` | Day of birth (leave empty to skip date picker) | `15` |
+| `dob_month` | Month of birth | `May` |
+| `dob_year` | Year of birth | `2000` |
+| `subjects` | Subject name for autocomplete | `Maths` |
+| `hobbies` | Pipe-separated hobbies | `Sports\|Reading` |
+| `upload_file` | Relative path to asset file | `apps/demoqa-e2e/test-data/RegistrationForm/assets/image.jpg` |
+| `current_address` | Address text | `120 Baker Street` |
+| `state` | State name for dropdown | `NCR` |
+| `city` | City name for dropdown | `Delhi` |
+| `expected_result` | Controls post-submit assertion | `success` / `error` / `close_modal` / `invalid_file` / `autocomplete` / `radio_exclusion` / `state_city` / `city_only` |
+| `scenario_description` | Becomes the test title in the report | `TC_001 - Valid form submission…` |
+
+### 4.3 `expected_result` values explained
+
+| Value | What the spec asserts |
+|---|---|
+| `success` | Confirmation modal appears; all submitted field values verified in modal table |
+| `error` | Confirmation modal does NOT appear; red-border validation shown on relevant field(s) |
+| `close_modal` | Modal appears, then Close button dismisses it |
+| `invalid_file` | Uploaded `.mp4` filename is recorded in the file input (DemoQA has no MIME restriction) |
+| `autocomplete` | Autocomplete dropdown is visible after typing in Subjects field |
+| `radio_exclusion` | Male then Female selected — only Female remains checked |
+| `state_city` | NCR selected → City dropdown becomes enabled and shows city options |
+| `city_only` | City dropdown remains disabled when no State is selected |
+
+### 4.4 Adding a new test row
+
+To add a new test case, append a row to the CSV:
+
+```
+TC_021,Jane,Doe,jane@example.com,Female,9876543210,,,,,,,,,, success,TC_021 - <description>
 ```
 
 **Rules:**
-- One row per scenario.
-- The `scenario_description` column value becomes the test title in the report — make it descriptive.
-- Credential values in the CSV are for documentation reference only. The spec always reads real
-  credentials from `.env` at runtime.
+- All 17 columns must be present (empty columns are fine — just leave them blank between commas).
+- The `scenario_description` value becomes the test title in the HTML report — make it descriptive.
 - Do not add empty lines or trailing spaces.
-
-### 3.3 Save and verify
-
-Save the CSV. Open it in a text editor and confirm:
-- The header row is intact.
-- Your new row is complete with the correct number of comma-separated columns.
-- No blank lines at the end.
+- Save the file in **UTF-8** encoding.
 
 ---
 
-## Phase 4 — Register the Test in TestController
+## Phase 5 — Register the Test in TestController
 
-Open `apps/<suite>/utils/TestController.ts` and check whether the spec file from your `.md`
-header is already listed.
+Open `apps/demoqa-e2e/utils/TestController.ts`.
 
-### Already registered (most common case)
-
-If you see an entry like this — **no change needed**:
+The current registration entry covers all 20 test cases:
 
 ```ts
 {
-  file: 'apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts',
+  file: 'apps/demoqa-e2e/tests/RegistrationForm/DemoQARegistrationFormTest.spec.ts',
   run: true,
   location: ['LOCAL', 'GITHUB'],
   sequenceOrder: 1,
-  description: 'Saucedemo Login Test',
+  description: 'DemoQA Student Registration Form — TC_001 to TC_020',
 },
 ```
 
-Adding a new CSV row is all that is required. The test will be discovered automatically from
-the CSV on the next run.
+### Adding a new spec file (rare)
 
-### Not yet registered (new spec file)
-
-If the spec file does not appear in `TestController.ts`, add an entry to the array:
+If you ever add a second spec file, append a new entry:
 
 ```ts
 {
-  file: 'apps/<suite>/tests/<Feature>/<Feature>Test.spec.ts',
+  file: 'apps/demoqa-e2e/tests/<Feature>/<Feature>Test.spec.ts',
   run: true,
   location: ['LOCAL', 'GITHUB'],
-  sequenceOrder: <next number after the last entry>,
-  description: '<copy the Test Title from STEP 2 of your .md file>',
+  sequenceOrder: 2,
+  description: '<description>',
 },
 ```
 
-Then **sync the compiled JavaScript file** — open `apps/<suite>/utils/TestController.js` and
-apply the same addition in CommonJS format:
+Then recompile the utils:
 
-```js
-exports.testControlData = [
-  // ... existing entries ...
-  {
-    file: 'apps/<suite>/tests/<Feature>/<Feature>Test.spec.ts',
-    run: true,
-    location: ['LOCAL', 'GITHUB'],
-    sequenceOrder: <N>,
-    description: '<description>',
-  },
-];
+```bash
+npx tsc
 ```
 
 ### Temporarily skipping a test
 
-To skip a test without deleting it, set `run: false` in its entry. Set it back to `true` when
-ready to include it again.
+Set `run: false` on the entry to skip it without deleting it. Set it back to `true` when ready.
 
 ---
 
-## Phase 5 — Run the Tests
+## Phase 6 — Run the Tests
 
-### 5.1 Full suite run (recommended)
+### 6.1 Full orchestrated run (recommended)
 
-This runs every test in the `TestController` that has `run: true` and `location: ['LOCAL']`
-or `['LOCAL', 'GITHUB']`, in sequence order:
+Runs every spec registered in `TestController` with `run: true`, in `sequenceOrder`, collects
+all reports, and generates a master summary dashboard:
 
 ```bash
-npx tsc ExecuteTest.ts
+npx tsc
 node ExecuteTest.js
 ```
 
-You will see console output like:
+A Chrome browser window opens during the run — this is expected (`--headed` mode).
+
+Console output you will see:
 
 ```
 Test files selected to run in sequence order: [
-  'apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts',
-  'apps/saucedemo-e2e/tests/Checkout/SaucedemoCheckoutTest.spec.ts'
+  'apps/demoqa-e2e/tests/RegistrationForm/DemoQARegistrationFormTest.spec.ts'
 ]
 Results folder: AllTestResults/HTMLReports/Results_2025-07-15_10-30-00
-Running: apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts
+
+Running: apps/demoqa-e2e/tests/RegistrationForm/DemoQARegistrationFormTest.spec.ts
   ...
-Running: apps/saucedemo-e2e/tests/Checkout/SaucedemoCheckoutTest.spec.ts
-  ...
+Copied HTML report for DemoQARegistrationFormTest
+============================================================
+[Summary report generated]
+============================================================
 ```
 
-A browser window will open during the run — this is expected (`--headed` mode).
-
-### 5.2 Single spec run (for faster iteration)
-
-To run only the spec from your test plan:
+### 6.2 npm script shortcuts
 
 ```bash
-npx playwright test "apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts" \
+npm run test:demoqa           # headless run
+npm run test:demoqa:headed    # headed run (browser visible)
+npm run test:demoqa:ui        # Playwright UI mode (interactive)
+npm run report                # open last HTML report
+```
+
+### 6.3 Single spec run (faster iteration)
+
+```bash
+npx playwright test "apps/demoqa-e2e/tests/RegistrationForm/DemoQARegistrationFormTest.spec.ts" \
   --workers=1 \
-  --config=apps/saucedemo-e2e/playwright.config.ts \
   --headed
 ```
 
-Replace the path with the spec file listed in your `.md` header.
+### 6.4 Run a single test case by title
 
-### 5.3 What you will see while tests run
+```bash
+npx playwright test --grep "TC_001" --headed
+```
+
+### 6.5 What you will see during the run
 
 | Console message | Meaning |
 |---|---|
-| `Running: apps/.../Login/...spec.ts` | Test file started |
-| `✓ Saucedemo Login - Valid login…` | Individual test passed |
-| `✗ Saucedemo Login - …` | Individual test failed — do not panic; see Phase 6 |
-| `Copied HTML report for SaucedemoLoginTest` | Report saved successfully |
+| `Running: apps/demoqa-e2e/tests/…spec.ts` | Test file started |
+| `✓ DemoQA Registration Form - TC_001…` | Individual test passed |
+| `✗ DemoQA Registration Form - TC_002…` | Individual test failed — do not panic; see Phase 7 |
+| `Copied HTML report for DemoQARegistrationFormTest` | Report saved successfully |
 | `Results folder: AllTestResults/…` | Where to find your results |
 
 ---
 
-## Phase 6 — Review the Results
+## Phase 7 — Review the Results
 
-### 6.1 Locate the results folder
+### 7.1 Locate the results folder
 
 After the run, open:
 
 ```
-AllTestResults/HTMLReports/Results_<timestamp>/
+AllTestResults/HTMLReports/Results_<YYYY-MM-DD_HH-MM-SS>/
 ```
-
-The `<timestamp>` is in the format `YYYY-MM-DD_HH-MM-SS` (local time).
 
 Inside you will find:
 
 ```
 Results_2025-07-15_10-30-00/
-├── 1-SaucedemoLoginTest/
-│   └── SaucedemoLoginTest.html        ← per-spec Playwright report
-├── 2-SaucedemoCheckoutTest/
-│   └── SaucedemoCheckoutTest.html     ← per-spec Playwright report
-└── TestExecutionSummary.html          ← master dashboard
+├── 1-DemoQARegistrationFormTest/
+│   ├── DemoQARegistrationFormTest.html     ← Playwright per-spec report
+│   ├── data/                               ← Trace and attachment assets
+│   └── test-results.json                  ← Raw JSON results
+└── TestExecutionSummary.html               ← Master dashboard
 ```
 
-### 6.2 Open the master summary
+### 7.2 Open the master summary
 
 Open `TestExecutionSummary.html` in any browser. It shows:
 - Total tests run, passed, failed, skipped
 - Per-spec breakdown with durations
 - Overall pass/fail status
 
-### 6.3 Open a per-spec report
+### 7.3 Open the per-spec Playwright report
 
-Open the `.html` file inside any numbered sub-folder. For each test you will see:
-- Pass / Fail / Skip status
+Open `1-DemoQARegistrationFormTest/DemoQARegistrationFormTest.html`. For each test you will see:
+- Pass / Fail / Skip status with duration
 - Full step-by-step console log
-- Screenshots attached at each step (labelled `1-LoginPage`, `2-AfterLogin`, etc.)
-- Error message and stack trace if the test failed
+- Screenshots attached at each step (labelled `1-FormPageLoaded`, `2-PersonalInfoFilled`, etc.)
+- On failure: error message, stack trace, and the Playwright trace viewer link
 
-### 6.4 Verify against the test plan
+### 7.4 Screenshot labels reference
 
-For each scenario row you added to the CSV, cross-reference with the test plan:
-
-| Check | Where to verify |
+| Label | What it captures |
 |---|---|
-| Test appears in the report | Look for the `scenario_description` value as the test title |
-| All screenshot labels present | Check the attachments panel — labels from STEP 2 of the `.md` should appear |
-| Assertions passed | Green check next to the test name |
-| Expected result matches | Compare the assertion outcome to STEP 2's "Expected Result" column |
+| `1-FormPageLoaded` | Form page after navigation and ad removal |
+| `2-PersonalInfoFilled` | After name, email, gender, mobile are entered |
+| `3-DateOfBirthSet` | After date picker interaction |
+| `4-SubjectAdded` | After subject tag added via autocomplete |
+| `5-HobbiesSelected` | After hobby checkboxes ticked |
+| `6-FileUploaded` | After file upload |
+| `7-StateSelected` | After state dropdown selection |
+| `8-CitySelected` | After city dropdown selection |
+| `9-AllFieldsFilled` | All fields complete, before submit |
+| `10-AfterSubmit` | Immediately after clicking Submit |
+| `11-SuccessModalVisible` | Confirmation modal visible |
+| `12-ModalFieldsVerified` | After all modal field assertions |
 
-### 6.5 Investigating a failure
+### 7.5 Investigating a failure
 
-1. Click the failing test in the HTML report.
-2. Read the **error message** — it will name the failing assertion.
+1. Click the failing test name in the HTML report.
+2. Read the **error message** — it names the failing assertion and the locator.
 3. Check the **screenshot** taken just before the failure.
-4. Compare the actual UI state (from the screenshot) against the expected result in the test plan.
-5. Determine the failure category:
+4. Determine the failure category:
 
 | Category | Symptoms | Action |
 |---|---|---|
-| **Wrong test data** | Assertion value does not match | Fix the CSV row or `.env` value |
-| **Missing env var** | `process.env.VAR is undefined` | Add the variable to `.env` |
+| **Wrong test data** | Value mismatch in assertion | Fix the CSV row |
+| **Missing env var** | `process.env.DEMOQA_URL is undefined` | Add the variable to `.env` |
 | **UI change / selector broken** | `Locator not found` or `Element not visible` | Raise with the developer — do not modify selectors yourself |
-| **App defect** | UI does what the test said but result is wrong | Raise a bug with a screenshot from the report |
-| **Flaky / timeout** | Passes on re-run | Re-run with `--retries=1`; if it persists, raise with the developer |
+| **App defect** | UI behaves correctly per test but result is wrong | Raise a bug with the screenshot from the report |
+| **Flaky / timeout** | Passes on re-run | Test retries 3 times automatically; if it still fails, raise with the developer |
+| **Known blocker** | TC_011 (future DoB), TC_016 (MP4 upload) | These are documented proxy assertions — check the `.md` plan for context |
 
 ---
 
-## Phase 7 — Report & Hand Off
+## Phase 8 — Report & Hand Off
 
-### 7.1 What to deliver
-
-At the end of a test run, provide the following to your team:
+### 8.1 What to deliver
 
 | Deliverable | Location | Notes |
 |---|---|---|
-| Master summary | `AllTestResults/HTMLReports/Results_<ts>/TestExecutionSummary.html` | Open in browser and take a screenshot, or share the file directly |
-| Per-spec reports | `AllTestResults/HTMLReports/Results_<ts>/<N>-<SpecName>/<SpecName>.html` | Share the failing spec reports when there are failures |
+| Master summary | `AllTestResults/HTMLReports/Results_<ts>/TestExecutionSummary.html` | Open in browser and screenshot, or share the file directly |
+| Per-spec report | `AllTestResults/HTMLReports/Results_<ts>/1-DemoQARegistrationFormTest/DemoQARegistrationFormTest.html` | Share when there are failures |
 | Bug reports | Your team's bug tracker | One ticket per failed test; attach the screenshot from the report |
 
-### 7.2 Archiving results
+### 8.2 Archiving results
 
 The `AllTestResults/` folder accumulates run history. Each timestamped sub-folder is a
 complete, self-contained run. Do not delete old runs until they have been reviewed and signed off.
 
-### 7.3 CI run results (GitHub Actions)
+### 8.3 CI run results (GitHub Actions)
 
 If tests ran via GitHub Actions:
 1. Go to the repository on GitHub.
@@ -395,19 +459,19 @@ If tests ran via GitHub Actions:
 ## Quick Reference Card
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  TESTER QUICK REFERENCE                                         │
-├──────┬──────────────────────────────────────────────────────────┤
-│  1   │  Read .md — check STEP 3 for ❌ before anything else     │
-│  2   │  npm install  (repo root)                                │
-│  3   │  Create .env with credentials                            │
-│  4   │  Add CSV row from STEP 2 of .md                          │
-│  5   │  Check TestController.ts — add entry if spec is new      │
-│  6   │  npx tsc ExecuteTest.ts && node ExecuteTest.js           │
-│  7   │  Open AllTestResults/HTMLReports/Results_.../            │
-│  8   │  Open TestExecutionSummary.html — verify all green       │
-│  9   │  Share summary + raise bugs for any failures             │
-└──────┴──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  DEMOQA TESTER QUICK REFERENCE                                      │
+├──────┬──────────────────────────────────────────────────────────────┤
+│  1   │  npm install  (repo root)                                    │
+│  2   │  Create .env with DEMOQA_URL and TEST_EXECUTION_LOCATION     │
+│  3   │  Review test plan .md in apps/demoqa-e2e/test-planner/       │
+│  4   │  Confirm CSV row exists in DemoQARegistrationFormTest-data.csv│
+│  5   │  Check TestController.ts — run: true for the spec            │
+│  6   │  npx tsc && node ExecuteTest.js                              │
+│  7   │  Open AllTestResults/HTMLReports/Results_.../                │
+│  8   │  Open TestExecutionSummary.html — verify all green           │
+│  9   │  Share summary + raise bugs for any failures                 │
+└──────┴──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -416,11 +480,13 @@ If tests ran via GitHub Actions:
 
 | Problem | Likely cause | Fix |
 |---|---|---|
-| `Cannot find module './apps/saucedemo-e2e/utils/TestController.js'` | `TestController.js` is out of sync | Run `npx tsc apps/saucedemo-e2e/utils/TestController.ts --outDir apps/saucedemo-e2e/utils` |
-| `Error reading test data file` | CSV path wrong or file missing | Check the CSV path in the spec header matches the actual file location |
-| `process.env.SAUCEDEMO_URL is undefined` | `.env` file missing or wrong location | Confirm `.env` exists at repo root (same level as `package.json`) |
-| `No test files found for execution` | All entries in `TestController` have `run: false` | Set `run: true` for at least one entry |
-| Browser opens but no login happens | Wrong `SAUCEDEMO_USERNAME` or `SAUCEDEMO_PASSWORD` in `.env` | Verify credentials with your team |
+| `Cannot find module './apps/demoqa-e2e/utils/TestController.js'` | `TestController.js` is out of sync | Run `npx tsc` from the repo root |
+| `Error reading test data file` | CSV path wrong or file missing | Confirm `apps/demoqa-e2e/test-data/RegistrationForm/DemoQARegistrationFormTest-data.csv` exists |
+| `process.env.DEMOQA_URL is undefined` | `.env` file missing or wrong location | Confirm `.env` exists at repo root (same level as `package.json`) |
+| `No test files found for execution` | All entries in `TestController` have `run: false` | Set `run: true` for the registration form entry |
+| Browser opens but form is not interacted with | Wrong `DEMOQA_URL` in `.env` | Verify URL resolves to `https://demoqa.com/automation-practice-form` |
 | `TypeScript error` on compile | Type mismatch after editing a file | Run `npx tsc --noEmit` to see all errors; share with the developer |
 | Report is empty / placeholder HTML | Playwright crashed before generating a report | Check the terminal output for the error message; share it with the developer |
-| Tests pass locally but fail on CI | Environment variable not set in GitHub workflow | Confirm all required env vars are configured as workflow inputs |
+| Tests pass locally but fail on CI | Environment variable not set in GitHub workflow | Confirm `DEMOQA_URL` and `TEST_EXECUTION_LOCATION` are set as workflow env vars |
+| TC_011 always fails | DemoQA allows future DoB — known app behaviour | This is a documented blocker in `TC_011_FutureDateOfBirth.md`; treat as a known issue |
+| TC_016 always passes unexpectedly | DemoQA has no MIME restriction on file upload | This is a documented blocker in `TC_016_UploadMP4InvalidFormat.md`; proxy assertion only |
