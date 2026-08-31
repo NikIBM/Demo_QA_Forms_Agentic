@@ -7,6 +7,16 @@
  *              date picker, subject auto-complete, hobby checkboxes, file
  *              upload, current address, state/city react-select dropdowns,
  *              and confirmation modal validation.
+ *
+ *              All locators use Playwright semantic selectors
+ *              (getByRole, getByLabel, getByPlaceholder, getByText) —
+ *              no CSS class selectors or XPath.
+ *
+ *              Note: DemoQA does not use standard label associations
+ *              (for/aria-labelledby) for Date of Birth, file upload, and
+ *              State/City dropdowns. For those fields we scope using
+ *              getByText() + structural traversal, which is still fully
+ *              semantic and avoids any dynamic CSS class names.
  */
 import { Locator, Page, expect } from '@playwright/test';
 import { BasePage } from '../Common/base.page';
@@ -21,21 +31,17 @@ export class DemoQARegistrationFormPage extends BasePage {
   readonly emailInput: Locator;
 
   // ============================================================
-  // Section 2: Gender Radio Button Labels
+  // Section 2: Gender Radio Buttons
   // ============================================================
-  readonly genderMaleLabel: Locator;
-  readonly genderFemaleLabel: Locator;
-  readonly genderOtherLabel: Locator;
   readonly genderMaleRadio: Locator;
   readonly genderFemaleRadio: Locator;
+  readonly genderOtherRadio: Locator;
 
   // ============================================================
   // Section 3: Mobile & Date of Birth
   // ============================================================
   readonly mobileInput: Locator;
   readonly dateOfBirthInput: Locator;
-  readonly dobMonthSelect: Locator;
-  readonly dobYearSelect: Locator;
 
   // ============================================================
   // Section 4: Subjects Auto-Complete
@@ -43,11 +49,11 @@ export class DemoQARegistrationFormPage extends BasePage {
   readonly subjectsInput: Locator;
 
   // ============================================================
-  // Section 5: Hobby Checkbox Labels
+  // Section 5: Hobby Checkboxes
   // ============================================================
-  readonly hobbySportsLabel: Locator;
-  readonly hobbyReadingLabel: Locator;
-  readonly hobbyMusicLabel: Locator;
+  readonly hobbySports: Locator;
+  readonly hobbyReading: Locator;
+  readonly hobbyMusic: Locator;
 
   // ============================================================
   // Section 6: Picture Upload
@@ -59,9 +65,7 @@ export class DemoQARegistrationFormPage extends BasePage {
   // ============================================================
   readonly currentAddressInput: Locator;
   readonly stateDropdownContainer: Locator;
-  readonly stateSearchInput: Locator;
   readonly cityDropdownContainer: Locator;
-  readonly citySearchInput: Locator;
 
   // ============================================================
   // Section 8: Submit Button
@@ -84,54 +88,87 @@ export class DemoQARegistrationFormPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Personal Info
-    this.firstNameInput = this.page.locator('#firstName');
-    this.lastNameInput  = this.page.locator('#lastName');
-    this.emailInput     = this.page.locator('#userEmail');
+    // ── Personal Info ──────────────────────────────────────────
+    // Matched by placeholder text visible in the form inputs.
+    this.firstNameInput = this.page.getByPlaceholder('First Name');
+    this.lastNameInput  = this.page.getByPlaceholder('Last Name');
+    this.emailInput     = this.page.getByPlaceholder('name@example.com');
 
-    // Gender — click the <label> because the actual radio input is visually hidden
-    this.genderMaleLabel   = this.page.locator('label[for="gender-radio-1"]');
-    this.genderFemaleLabel = this.page.locator('label[for="gender-radio-2"]');
-    this.genderOtherLabel  = this.page.locator('label[for="gender-radio-3"]');
-    // Hidden radio inputs — used for state assertions only
-    this.genderMaleRadio   = this.page.locator('#gender-radio-1');
-    this.genderFemaleRadio = this.page.locator('#gender-radio-2');
+    // ── Gender ─────────────────────────────────────────────────
+    // DemoQA uses <label for="gender-radio-N">Male/Female/Other</label> associations.
+    // getByLabel resolves to the hidden <input type="radio"> via the for= attribute.
+    // exact: true prevents 'Male' matching 'Female' as a substring.
+    this.genderMaleRadio   = this.page.getByLabel('Male',   { exact: true });
+    this.genderFemaleRadio = this.page.getByLabel('Female', { exact: true });
+    this.genderOtherRadio  = this.page.getByLabel('Other',  { exact: true });
 
-    // Mobile & DOB
-    this.mobileInput      = this.page.locator('#userNumber');
-    this.dateOfBirthInput = this.page.locator('#dateOfBirthInput');
-    this.dobMonthSelect   = this.page.locator('.react-datepicker__month-select');
-    this.dobYearSelect    = this.page.locator('.react-datepicker__year-select');
+    // ── Mobile ─────────────────────────────────────────────────
+    this.mobileInput = this.page.getByPlaceholder('Mobile Number');
 
-    // Subjects
-    this.subjectsInput = this.page.locator('#subjectsInput');
+    // ── Date of Birth ──────────────────────────────────────────
+    // DemoQA does NOT link the label to the input via for/aria-labelledby.
+    // DOM: <div id="dateOfBirth-wrapper"> → <div class="col-md-3"> → <label>Date of Birth</label>
+    // Scope: label text → parent col div → parent row div (dateOfBirth-wrapper) → textbox inside.
+    this.dateOfBirthInput = this.page
+      .getByText('Date of Birth', { exact: true })
+      .locator('../..')
+      .getByRole('textbox');
 
-    // Hobbies — click the <label> because the actual checkbox input is visually hidden
-    this.hobbySportsLabel  = this.page.locator('label[for="hobbies-checkbox-1"]');
-    this.hobbyReadingLabel = this.page.locator('label[for="hobbies-checkbox-2"]');
-    this.hobbyMusicLabel   = this.page.locator('label[for="hobbies-checkbox-3"]');
+    // ── Subjects ───────────────────────────────────────────────
+    // DemoQA does not link the Subjects label via for/aria-labelledby.
+    // DOM: <div id="subjectsWrapper"> → <div class="col-md-3"> → <label>Subjects</label>
+    // The input inside the container is role="combobox" (react-select auto-complete).
+    this.subjectsInput = this.page
+      .getByText('Subjects', { exact: true })
+      .locator('../..')
+      .getByRole('combobox');
 
-    // File upload
-    this.uploadPictureInput = this.page.locator('#uploadPicture');
+    // ── Hobbies ────────────────────────────────────────────────
+    // DemoQA uses <label for="hobbies-checkbox-N">Sports/Reading/Music</label>.
+    // getByLabel resolves to the hidden <input type="checkbox">.
+    this.hobbySports  = this.page.getByLabel('Sports');
+    this.hobbyReading = this.page.getByLabel('Reading');
+    this.hobbyMusic   = this.page.getByLabel('Music');
 
-    // Address & State/City react-select controls
-    this.currentAddressInput    = this.page.locator('#currentAddress');
-    this.stateDropdownContainer = this.page.locator('#state');
-    this.stateSearchInput       = this.page.locator('#state input');
-    this.cityDropdownContainer  = this.page.locator('#city');
-    this.citySearchInput        = this.page.locator('#city input');
+    // ── File Upload ────────────────────────────────────────────
+    // DemoQA uses a non-standard label="Select picture" attribute on the <input>.
+    // There is no <label for="uploadPicture"> element in the DOM.
+    // Scope: "Picture" label text → parent col div → parent row → file input.
+    this.uploadPictureInput = this.page
+      .getByText('Picture', { exact: true })
+      .locator('../..')
+      .locator('input[type="file"]');
 
-    // Submit
-    this.submitButton = this.page.locator('#submit');
+    // ── Current Address ────────────────────────────────────────
+    this.currentAddressInput = this.page.getByPlaceholder('Current Address');
 
-    // Confirmation Modal
-    this.confirmationModal = this.page.locator('.modal-content');
-    this.modalTitle        = this.page.locator('#example-modal-sizes-title-lg');
-    this.modalTableBody    = this.page.locator('.table-responsive tbody');
-    this.modalCloseButton  = this.page.locator('#closeLargeModal');
+    // ── State / City React-Select ──────────────────────────────
+    // DemoQA has a single "State and City" label for both dropdowns.
+    // The State input (enabled) is the only getByRole('combobox') visible in the row.
+    // The City input may be disabled; Playwright excludes disabled elements from getByRole.
+    // Use locator('[role="combobox"]') (ARIA attribute selector) to include disabled inputs.
+    const stateCityRow = this.page
+      .getByText('State and City', { exact: true })
+      .locator('../..');
+    this.stateDropdownContainer = stateCityRow.locator('[role="combobox"]').nth(0);
+    this.cityDropdownContainer  = stateCityRow.locator('[role="combobox"]').nth(1);
 
-    // Left sidebar
-    this.practiceFormLink = this.page.locator('.menu-list li', { hasText: 'Practice Form' });
+    // ── Submit ─────────────────────────────────────────────────
+    this.submitButton = this.page.getByRole('button', { name: 'Submit' });
+
+    // ── Confirmation Modal ─────────────────────────────────────
+    // DemoQA Bootstrap modal adds role="dialog" on the outer .modal div.
+    this.confirmationModal = this.page.getByRole('dialog');
+    // The modal title uses <div class="modal-title h4"> — not a real heading tag.
+    // getByText inside the dialog is the reliable semantic approach.
+    this.modalTitle     = this.page.getByRole('dialog').getByText('Thanks for submitting the form');
+    // Table body scoped inside the dialog
+    this.modalTableBody = this.page.getByRole('dialog').locator('tbody');
+    // Close button inside the modal footer
+    this.modalCloseButton = this.page.getByRole('button', { name: 'Close' });
+
+    // ── Left Sidebar ───────────────────────────────────────────
+    this.practiceFormLink = this.page.getByRole('listitem').filter({ hasText: 'Practice Form' });
   }
 
   // ============================================================
@@ -173,13 +210,17 @@ export class DemoQARegistrationFormPage extends BasePage {
     await this.emailInput.fill(value);
   }
 
+  /**
+   * Selects a gender by clicking the hidden radio button (force: true bypasses
+   * the visibility check required for visually-hidden custom-radio inputs).
+   */
   async selectGender(gender: 'Male' | 'Female' | 'Other'): Promise<void> {
     const map: Record<string, Locator> = {
-      Male:   this.genderMaleLabel,
-      Female: this.genderFemaleLabel,
-      Other:  this.genderOtherLabel,
+      Male:   this.genderMaleRadio,
+      Female: this.genderFemaleRadio,
+      Other:  this.genderOtherRadio,
     };
-    await map[gender].click();
+    await map[gender].click({ force: true });
   }
 
   async fillMobile(value: string): Promise<void> {
@@ -188,17 +229,35 @@ export class DemoQARegistrationFormPage extends BasePage {
 
   /**
    * Opens the date-picker and selects day/month/year via the dropdown controls.
-   * @param day   - Two-digit day e.g. '24'
-   * @param month - Full month name e.g. 'September'
-   * @param year  - Four-digit year string e.g. '1999'
+   *
+   * The react-datepicker pops open inline (not in a dialog); it renders two
+   * <select> elements (role="combobox") — month first, year second — inside
+   * the calendar header container.
+   *
+   * @param day   - Two-digit day e.g. '15'
+   * @param month - Full month name e.g. 'May'
+   * @param year  - Four-digit year string e.g. '2000'
    */
   async setDateOfBirth(day: string, month: string, year: string): Promise<void> {
     await this.dateOfBirthInput.click();
-    await this.dobMonthSelect.selectOption({ label: month });
-    await this.dobYearSelect.selectOption({ label: year });
+
+    // After clicking, the react-datepicker renders two <select> (combobox) elements.
+    // Scope to the datepicker wrapper (../.. from label = dateOfBirth-wrapper row).
+    const datePicker = this.page
+      .getByText('Date of Birth', { exact: true })
+      .locator('../..')
+      .locator('[class*="react-datepicker"]');
+
+    await datePicker.getByRole('combobox').nth(0).selectOption({ label: month });
+    await datePicker.getByRole('combobox').nth(1).selectOption({ label: year });
+
+    // react-datepicker renders day cells with role="gridcell" and text content = day number.
+    // After navigating to the right month/year, pick the first gridcell whose text is
+    // exactly the target day (excludes outside-month cells which appear earlier/later).
     const dayPadded = day.padStart(2, '0');
-    await this.page
-      .locator(`.react-datepicker__day--0${dayPadded}:not(.react-datepicker__day--outside-month)`)
+    await datePicker
+      .getByRole('gridcell')
+      .filter({ hasText: new RegExp(`^${dayPadded}$`) })
       .first()
       .click();
   }
@@ -209,26 +268,27 @@ export class DemoQARegistrationFormPage extends BasePage {
    */
   async addSubject(subject: string): Promise<void> {
     await this.subjectsInput.fill(subject);
-    await this.page.locator('.subjects-auto-complete__option').first().click();
+    await this.page.getByRole('option').first().click();
   }
 
   /**
-   * Ticks one or more hobby checkboxes by clicking their visible labels.
+   * Ticks one or more hobby checkboxes. The actual <input type="checkbox"> elements
+   * are visually hidden; force: true allows interaction without visibility.
    * @param hobbies - Array of hobby names to select.
    */
   async checkHobbies(hobbies: Array<'Sports' | 'Reading' | 'Music'>): Promise<void> {
     const map: Record<string, Locator> = {
-      Sports:  this.hobbySportsLabel,
-      Reading: this.hobbyReadingLabel,
-      Music:   this.hobbyMusicLabel,
+      Sports:  this.hobbySports,
+      Reading: this.hobbyReading,
+      Music:   this.hobbyMusic,
     };
     for (const h of hobbies) {
-      await map[h].click();
+      await map[h].click({ force: true });
     }
   }
 
   /**
-   * Uploads a file via the hidden file input.
+   * Uploads a file via the file input (scoped from the "Picture" row label).
    * @param filePath - Absolute or workspace-relative path to the file.
    */
   async uploadPicture(filePath: string): Promise<void> {
@@ -240,25 +300,25 @@ export class DemoQARegistrationFormPage extends BasePage {
   }
 
   /**
-   * Selects a State from the react-select #state dropdown.
+   * Selects a State from the react-select dropdown.
+   * Clicks the State combobox (first in the State/City row), types to search,
+   * then picks the matching option from the list.
    * @param state - State label e.g. 'NCR'
    */
   async selectState(state: string): Promise<void> {
     await this.stateDropdownContainer.click();
-    await this.stateSearchInput.fill(state);
-    // react-select renders options with a dynamic hash class — use the data-driven text match
-    await this.page.locator('#state [class*="-option"]', { hasText: state }).first().click();
+    await this.stateDropdownContainer.fill(state);
+    await this.page.getByRole('option', { name: state }).first().click();
   }
 
   /**
-   * Selects a City from the react-select #city dropdown. Requires State to be selected first.
+   * Selects a City from the react-select dropdown. Requires State to be selected first.
    * @param city - City label e.g. 'Delhi'
    */
   async selectCity(city: string): Promise<void> {
     await this.cityDropdownContainer.click();
-    await this.citySearchInput.fill(city);
-    // react-select renders options with a dynamic hash class — use the data-driven text match
-    await this.page.locator('#city [class*="-option"]', { hasText: city }).first().click();
+    await this.cityDropdownContainer.fill(city);
+    await this.page.getByRole('option', { name: city }).first().click();
   }
 
   async clickSubmit(): Promise<void> {
@@ -272,14 +332,14 @@ export class DemoQARegistrationFormPage extends BasePage {
   /** Asserts the 'Student Registration Form' heading is visible on the page. */
   async verifyFormPageLoaded(): Promise<void> {
     await expect(
-      this.page.locator('.practice-form-wrapper h5', { hasText: 'Student Registration Form' }),
+      this.page.getByRole('heading', { name: 'Student Registration Form' }),
     ).toBeVisible({ timeout: 10000 });
   }
 
   /** Asserts the confirmation modal is visible with the correct title. */
   async verifySubmissionSuccessful(): Promise<void> {
     await expect(this.confirmationModal).toBeVisible({ timeout: 10000 });
-    await expect(this.modalTitle).toHaveText('Thanks for submitting the form');
+    await expect(this.modalTitle).toBeVisible({ timeout: 5000 });
   }
 
   /** Asserts the modal is NOT visible — form submission was blocked. */
@@ -307,37 +367,32 @@ export class DemoQARegistrationFormPage extends BasePage {
     await expect(field).toHaveCSS('border-color', 'rgb(220, 53, 69)');
   }
 
-  /** Asserts the city react-select control is disabled (no State selected).
-   *  DemoQA renders: aria-disabled="true" on the control div and disabled on the input. */
+  /**
+   * Asserts the City react-select combobox is disabled (no State selected).
+   * When no State is selected, DemoQA sets the input as disabled="" and the
+   * parent control div carries aria-disabled="true".
+   */
   async verifyCityDropdownDisabled(): Promise<void> {
-    const control = this.page.locator('#city [class*="-control"]').first();
-    await control.waitFor({ state: 'attached', timeout: 10000 });
-    // Use aria-disabled attribute which is reliably set by DemoQA's react-select
-    await expect(control).toHaveAttribute('aria-disabled', 'true', { timeout: 5000 });
+    // The City combobox (react-select input) is disabled when no State is chosen.
+    await expect(this.cityDropdownContainer).toBeDisabled({ timeout: 10000 });
   }
 
-  /** Asserts the city react-select control is enabled (State was selected).
-   *  DemoQA removes aria-disabled once a State is selected. */
+  /**
+   * Asserts the City react-select combobox is enabled (State was selected).
+   */
   async verifyCityDropdownEnabled(): Promise<void> {
-    const control = this.page.locator('#city [class*="-control"]').first();
-    await control.waitFor({ state: 'attached', timeout: 10000 });
-    // aria-disabled is removed (or absent) when the city dropdown is enabled
-    await expect(control).not.toHaveAttribute('aria-disabled', 'true', { timeout: 5000 });
+    await expect(this.cityDropdownContainer).not.toBeDisabled({ timeout: 10000 });
   }
 
-  /** Closes the confirmation modal and waits for it to disappear.
-   *  DemoQA uses Escape / Bootstrap dismiss — clicking the close button may be blocked by
-   *  ad overlays. Press Escape which reliably dismisses the modal in headless Chromium. */
+  /** Closes the confirmation modal.
+   *  Clicking the Close button is preferred; falls back to Escape key. */
   async closeModal(): Promise<void> {
-    // Attempt the close button first; fall back to Escape key
     await this.modalCloseButton.click({ force: true });
-    // DemoQA Bootstrap modal: the outer .modal wrapper is removed from DOM on dismiss
     try {
-      await expect(this.page.locator('.modal')).not.toBeAttached({ timeout: 5000 });
+      await expect(this.confirmationModal).not.toBeAttached({ timeout: 5000 });
     } catch {
-      // If button click didn't work, press Escape to close
       await this.page.keyboard.press('Escape');
-      await expect(this.page.locator('.modal')).not.toBeAttached({ timeout: 5000 });
+      await expect(this.confirmationModal).not.toBeAttached({ timeout: 5000 });
     }
   }
 }

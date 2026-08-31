@@ -96,9 +96,7 @@ test.describe('@DemoQARegistrationForm', () => {
 
         // Step 5: Attempt to click on the City dropdown
         // Expected: The City dropdown does not open; it remains disabled
-        // DemoQA sets aria-disabled="true" on the react-select control when no State is selected
-        const control = page.locator('#city [class*="-control"]').first();
-        await expect(control).toHaveAttribute('aria-disabled', 'true', { timeout: 5000 });
+        await expect(formPage.cityDropdownContainer).toBeDisabled({ timeout: 5000 });
         await takeScreenShot(page, testInfo, '3-CityRemainsDisabled');
         return;
       }
@@ -147,7 +145,7 @@ test.describe('@DemoQARegistrationForm', () => {
 
         // Step 6: Observe the contents of the autocomplete dropdown
         // Expected: The dropdown contains "Maths" as a selectable option
-        const mathsOption = page.locator('.subjects-auto-complete__option', { hasText: data.subjects });
+        const mathsOption = page.getByRole('option', { name: data.subjects });
         await expect(mathsOption).toBeVisible({ timeout: 5000 });
         await takeScreenShot(page, testInfo, '3-AutocompleteDropdownVisible');
         return;
@@ -176,8 +174,8 @@ test.describe('@DemoQARegistrationForm', () => {
         // Step 8: Click on the City dropdown
         // Expected: The City dropdown opens and displays cities for the selected state
         await formPage.cityDropdownContainer.click();
-        // react-select renders options with dynamic hash class — match on the partial '-option' suffix
-        const cityOptions = page.locator('#city [class*="-option"]');
+        // react-select renders the options in a listbox — match by role
+        const cityOptions = page.getByRole('option');
         await expect(cityOptions.first()).toBeVisible({ timeout: 5000 });
         await takeScreenShot(page, testInfo, '5-CityOptionsVisible');
         return;
@@ -248,8 +246,8 @@ test.describe('@DemoQARegistrationForm', () => {
       // TC_013 Step 11: Verify both Sports and Reading are simultaneously checked
       if (data.tc_id === 'TC_013') {
         // Expected: Both Sports and Reading checkboxes are checked at the same time
-        await expect(page.locator('#hobbies-checkbox-1')).toBeChecked();
-        await expect(page.locator('#hobbies-checkbox-2')).toBeChecked();
+        await expect(page.getByRole('checkbox', { name: 'Sports' })).toBeChecked();
+        await expect(page.getByRole('checkbox', { name: 'Reading' })).toBeChecked();
       }
 
       // Step 9 (TC_014/015/016): File upload
@@ -356,7 +354,7 @@ test.describe('@DemoQARegistrationForm', () => {
 
         // Step 15: Verify the modal with title "Thanks for submitting the form" is visible
         // Expected: The modal is visible on screen
-        await expect(formPage.modalTitle).toHaveText('Thanks for submitting the form');
+        await expect(formPage.modalTitle).toBeVisible({ timeout: 5000 });
 
         // Step 16: Click the Close button on the modal
         // Expected: The modal closes and is no longer visible on screen
