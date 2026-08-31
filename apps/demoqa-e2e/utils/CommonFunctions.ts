@@ -1,5 +1,4 @@
 /*
- * Author: Bob
  * Created (yyyy-mm-dd): 2025-07-10
  * Description: Common utility functions for DemoQA Playwright tests.
  */

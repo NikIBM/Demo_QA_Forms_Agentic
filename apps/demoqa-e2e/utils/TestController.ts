@@ -1,5 +1,4 @@
 /*
- * Author: Bob
  * Created (yyyy-mm-dd): 2025-07-10
  * Description: Test registry for the DemoQA e2e suite.
  *              Every spec file must have a corresponding entry here.

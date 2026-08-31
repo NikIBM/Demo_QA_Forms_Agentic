@@ -328,7 +328,6 @@ Every `.ts` file must start with this header:
 
 ```ts
 /*
- * Author: <Name>
  * Created (yyyy-mm-dd): <date>
  * Description: <single-line summary of the file's purpose>
  */

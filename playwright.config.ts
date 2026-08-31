@@ -1,5 +1,4 @@
 /*
- * Author: Bob
  * Created (yyyy-mm-dd): 2025-07-10
  * Description: Single consolidated Playwright configuration for the DemoQA e2e test suite.
  *              Base URL loaded from the DEMOQA_URL environment variable (.env).
