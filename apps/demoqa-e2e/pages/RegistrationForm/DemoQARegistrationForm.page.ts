@@ -1,22 +1,4 @@
-/*
- * Created (yyyy-mm-dd): 2025-07-10
- * Description: Page Object for the DemoQA Student Registration Form
- *              (https://demoqa.com/automation-practice-form).
- *              Covers all interactive elements: text inputs, radio buttons,
- *              date picker, subject auto-complete, hobby checkboxes, file
- *              upload, current address, state/city react-select dropdowns,
- *              and confirmation modal validation.
- *
- *              All locators use Playwright semantic selectors
- *              (getByRole, getByLabel, getByPlaceholder, getByText) —
- *              no CSS class selectors or XPath.
- *
- *              Note: DemoQA does not use standard label associations
- *              (for/aria-labelledby) for Date of Birth, file upload, and
- *              State/City dropdowns. For those fields we scope using
- *              getByText() + structural traversal, which is still fully
- *              semantic and avoids any dynamic CSS class names.
- */
+
 import { Locator, Page, expect } from '@playwright/test';
 import { BasePage } from '../Common/base.page';
 

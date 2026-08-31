@@ -1,7 +1,4 @@
-/*
- * Created (yyyy-mm-dd): 2025-07-10
- * Description: Low-level utility helpers for DemoQA Playwright tests.
- */
+
 import type { Locator } from '@playwright/test';
 
 const MAX_RETRIES = 5;

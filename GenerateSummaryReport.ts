@@ -1,11 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-/*
-* Author: Harmanjit Chopra
-* Created (yyyy-mm-dd): 2025-12-29
-* Description: Generate a consolidated HTML summary report from all test results
-*/
 
 interface TestResult {
   specFileName: string;

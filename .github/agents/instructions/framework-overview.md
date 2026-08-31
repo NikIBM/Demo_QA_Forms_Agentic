@@ -327,10 +327,7 @@ node ExecuteTest.js
 Every `.ts` file must start with this header:
 
 ```ts
-/*
- * Created (yyyy-mm-dd): <date>
- * Description: <single-line summary of the file's purpose>
- */
+
 ```
 
 ---
