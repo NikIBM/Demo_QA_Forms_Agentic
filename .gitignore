@@ -26,3 +26,6 @@ apps/demoqa-e2e/test-planner/
 ExecuteTest.js
 GenerateSummaryReport.js
 /dist/
+
+# Auto-generated test run timestamp
+.test-run-env
