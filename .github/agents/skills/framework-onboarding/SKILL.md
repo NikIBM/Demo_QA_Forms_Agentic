@@ -34,14 +34,14 @@ Read the following files as concrete examples of the patterns:
 
 | File | What it demonstrates |
 |---|---|
-| `apps/saucedemo-e2e/pages/Common/base.page.ts` | BasePage — the class all pages extend |
-| `apps/saucedemo-e2e/pages/Login/SaucedemoLogin.page.ts` | Full page object with locators, actions, validations |
-| `apps/saucedemo-e2e/tests/Login/SaucedemoLoginTest.spec.ts` | Complete spec: CSV load, beforeAll/afterAll, test loop, screenshots |
-| `apps/saucedemo-e2e/test-data/Login/SaucedemoLoginTest-data.csv` | CSV format with headers |
-| `apps/saucedemo-e2e/utils/TestController.ts` | Registry entry structure |
-| `apps/saucedemo-e2e/utils/CommonFunctions.ts` | `takeScreenShot` helper |
-| `apps/saucedemo-e2e/utils/index.ts` | `fillInputField`, `addTimeout` utilities |
-| `apps/saucedemo-e2e/playwright.config.ts` | Suite-level Playwright config |
+| `apps/test-e2e/pages/Common/base.page.ts` | BasePage — the class all pages extend |
+| `apps/test-e2e/pages/Login/testLogin.page.ts` | Full page object with locators, actions, validations |
+| `apps/test-e2e/tests/Login/testLoginTest.spec.ts` | Complete spec: CSV load, beforeAll/afterAll, test loop, screenshots |
+| `apps/test-e2e/test-data/Login/testLoginTest-data.csv` | CSV format with headers |
+| `apps/test-e2e/utils/TestController.ts` | Registry entry structure |
+| `apps/test-e2e/utils/CommonFunctions.ts` | `takeScreenShot` helper |
+| `apps/test-e2e/utils/index.ts` | `fillInputField`, `addTimeout` utilities |
+| `apps/test-e2e/playwright.config.ts` | Suite-level Playwright config |
 | `ExecuteTest.ts` | Orchestration entry point |
 
 Use `read_file` for each file listed above.
